@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/user');
 const cardRoutes = require('./routes/card');
+const { NOT_FOUND_ERROR } = require('./constants/errors');
 
 const app = express();
 const port = 3000;
@@ -27,7 +28,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/users', userRoutes);
 app.use('/cards', cardRoutes);
-
+app.use('*', (req, res) => {
+  res.status(NOT_FOUND_ERROR).send({
+    message: 'Здесь ничего нет :)',
+  });
+});
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

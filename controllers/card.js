@@ -6,9 +6,7 @@ const {
 module.exports.createCard = async (req, res) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.send({
-      message: `Карточка успешно создана: ${card._id}`,
-    }))
+    .then((card) => res.send({ card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные' });
@@ -21,14 +19,10 @@ module.exports.createCard = async (req, res) => {
 
 module.exports.getCards = (req, res) => {
   Card.find({})
-    .then((cards) => {
-      res.send(cards);
-    })
-    .catch(() => {
-      res
-        .status(INTERNAL_SERVER_ERROR)
-        .send({ message: 'Не удалось получить карточки' });
-    });
+    .then((cards) => res.send(cards))
+    .catch(() => res
+      .status(INTERNAL_SERVER_ERROR)
+      .send({ message: 'Не удалось получить карточки' }));
 };
 
 module.exports.deleteCard = (req, res) => {
@@ -44,8 +38,13 @@ module.exports.deleteCard = (req, res) => {
         message: 'Карточка удалена',
       });
     })
-    .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR).send({
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res
+          .status(BAD_REQUEST_ERROR)
+          .send({ message: 'Пользователь не найден' });
+      }
+      return res.status(INTERNAL_SERVER_ERROR).send({
         message: 'Не удалось удалить карточку',
       });
     });
@@ -67,8 +66,13 @@ module.exports.likeCard = (req, res) => {
       }
       return res.send(updatedCard);
     })
-    .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR).send({
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res
+          .status(BAD_REQUEST_ERROR)
+          .send({ message: 'Пользователь не найден' });
+      }
+      return res.status(INTERNAL_SERVER_ERROR).send({
         message: 'Не удалось обновить карточку',
       });
     });
@@ -88,8 +92,13 @@ module.exports.dislikeCard = (req, res) => {
       }
       return res.send(updatedCard);
     })
-    .catch(() => {
-      res
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res
+          .status(BAD_REQUEST_ERROR)
+          .send({ message: 'Пользователь не найден' });
+      }
+      return res
         .status(INTERNAL_SERVER_ERROR)
         .send({ message: 'Не удалось обновить карточку' });
     });

@@ -8,17 +8,16 @@ const {
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .then(() => res.send({ message: 'Пользователь создан' }))
+    .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'ValidatorError') {
-        res
+      if (err.name === 'ValidationError') {
+        return res
           .status(BAD_REQUEST_ERROR)
           .send({ message: 'Переданы некорректные данные' });
-      } else {
-        res
-          .status(INTERNAL_SERVER_ERROR)
-          .send({ message: 'Ошибка при создании пользователя' });
       }
+      return res
+        .status(INTERNAL_SERVER_ERROR)
+        .send({ message: 'Ошибка при создании пользователя' });
     });
 };
 
@@ -33,20 +32,19 @@ module.exports.getUser = (req, res) => {
   User.findById(id)
     .then((user) => {
       if (!user) {
-        res
+        return res
           .status(NOT_FOUND_ERROR)
-          .send({ message: `Пользователь с id: ${id} не найден` });
+          .send({ message: 'Пользователь не найден' });
       }
-      res.send(user);
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res
-          .status(NOT_FOUND_ERROR)
-          .send({ message: `Пользователь с id: ${id} не найден` });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        return res
+          .status(BAD_REQUEST_ERROR)
+          .send({ message: 'Пользователь не найден' });
       }
+      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
@@ -65,7 +63,7 @@ module.exports.updateUserName = (req, res) => {
       if (!updatedUser) {
         return res
           .status(NOT_FOUND_ERROR)
-          .send({ message: `Пользователь с id: ${id} не найден` });
+          .send({ message: 'Пользователь не найден' });
       }
       return res.send(updatedUser);
     })
@@ -94,7 +92,7 @@ module.exports.updateUserAvatar = (req, res) => {
       if (!updatedUser) {
         return res
           .status(NOT_FOUND_ERROR)
-          .send({ message: `Пользователь с id: ${id} не найден` });
+          .send({ message: 'Пользователь не найден' });
       }
       return res.send(updatedUser);
     })
