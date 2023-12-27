@@ -1,12 +1,12 @@
 const Card = require('../models/card');
 const {
-  INTERNAL_SERVER_ERROR, NOT_FOUND_ERROR, BAD_REQUEST_ERROR,
+  INTERNAL_SERVER_ERROR, NOT_FOUND_ERROR, BAD_REQUEST_ERROR, CREATED_SUCCESS,
 } = require('../constants/errors');
 
 module.exports.createCard = async (req, res) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.send({ card }))
+    .then((card) => res.status(CREATED_SUCCESS).send({ card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные' });
@@ -28,17 +28,16 @@ module.exports.getCards = (req, res) => {
 module.exports.deleteCard = (req, res) => {
   const { cardId } = req.params;
   Card.findByIdAndDelete(cardId)
-    .then((card) => {
-      if (!card) {
-        return res.status(NOT_FOUND_ERROR).send({
-          message: 'Карточка не найдена',
-        });
-      }
-      return res.send({
-        message: 'Карточка удалена',
-      });
-    })
+    .orFail(new Error('NotFound'))
+    .then(() => res.send({
+      message: 'Карточка удалена',
+    }))
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res
+          .status(NOT_FOUND_ERROR)
+          .send({ message: 'Карточка не найдена' });
+      }
       if (err.name === 'CastError') {
         return res
           .status(BAD_REQUEST_ERROR)
@@ -58,15 +57,14 @@ module.exports.likeCard = (req, res) => {
     { new: true },
   )
     .populate([{ path: 'likes', model: 'user' }])
-    .then((updatedCard) => {
-      if (!updatedCard) {
-        return res.status(NOT_FOUND_ERROR).send({
-          message: 'Карточка не найдена',
-        });
-      }
-      return res.send(updatedCard);
-    })
+    .orFail(new Error('NotFound'))
+    .then((updatedCard) => res.send(updatedCard))
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res
+          .status(NOT_FOUND_ERROR)
+          .send({ message: 'Карточка не найдена' });
+      }
       if (err.name === 'CastError') {
         return res
           .status(BAD_REQUEST_ERROR)
@@ -86,13 +84,14 @@ module.exports.dislikeCard = (req, res) => {
     { new: true },
   )
     .populate([{ path: 'likes', model: 'user' }])
-    .then((updatedCard) => {
-      if (!updatedCard) {
-        return res.status(NOT_FOUND_ERROR).send({ message: 'Карточка не найдена' });
-      }
-      return res.send(updatedCard);
-    })
+    .orFail(new Error('NotFound'))
+    .then((updatedCard) => res.send(updatedCard))
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res
+          .status(NOT_FOUND_ERROR)
+          .send({ message: 'Карточка не найдена' });
+      }
       if (err.name === 'CastError') {
         return res
           .status(BAD_REQUEST_ERROR)

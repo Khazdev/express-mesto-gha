@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
 const userRoutes = require('./routes/user');
 const cardRoutes = require('./routes/card');
 const { NOT_FOUND_ERROR } = require('./constants/errors');
@@ -15,7 +16,7 @@ mongoose
   .catch((error) => {
     console.error('Error connecting to MongoDB:', error);
   });
-
+app.use(helmet());
 app.use((req, res, next) => {
   req.user = {
     _id: '658bc8d713460e7f79d5d77a', // вставьте сюда _id созданного в предыдущем пункте пользователя

@@ -2,13 +2,13 @@ const User = require('../models/user');
 const {
   INTERNAL_SERVER_ERROR,
   BAD_REQUEST_ERROR,
-  NOT_FOUND_ERROR,
+  NOT_FOUND_ERROR, CREATED_SUCCESS,
 } = require('../constants/errors');
 
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .then((user) => res.send(user))
+    .then((user) => res.status(CREATED_SUCCESS).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res
@@ -30,15 +30,14 @@ module.exports.getUsers = (req, res) => {
 module.exports.getUser = (req, res) => {
   const { userId: id } = req.params;
   User.findById(id)
-    .then((user) => {
-      if (!user) {
+    .orFail(new Error('NotFound'))
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err.message === 'NotFound') {
         return res
           .status(NOT_FOUND_ERROR)
           .send({ message: 'Пользователь не найден' });
       }
-      return res.send(user);
-    })
-    .catch((err) => {
       if (err.name === 'CastError') {
         return res
           .status(BAD_REQUEST_ERROR)
@@ -59,15 +58,14 @@ module.exports.updateUserName = (req, res) => {
       runValidators: true,
     },
   )
-    .then((updatedUser) => {
-      if (!updatedUser) {
+    .orFail(new Error('NotFound'))
+    .then((updatedUser) => res.send(updatedUser))
+    .catch((err) => {
+      if (err.message === 'NotFound') {
         return res
           .status(NOT_FOUND_ERROR)
           .send({ message: 'Пользователь не найден' });
       }
-      return res.send(updatedUser);
-    })
-    .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некорректные данные' });
       }
@@ -88,6 +86,7 @@ module.exports.updateUserAvatar = (req, res) => {
       runValidators: true,
     },
   )
+    .orFail(new Error('NotFound'))
     .then((updatedUser) => {
       if (!updatedUser) {
         return res
@@ -96,8 +95,13 @@ module.exports.updateUserAvatar = (req, res) => {
       }
       return res.send(updatedUser);
     })
-    .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR).send({
+    .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res
+          .status(NOT_FOUND_ERROR)
+          .send({ message: 'Пользователь не найден' });
+      }
+      return res.status(INTERNAL_SERVER_ERROR).send({
         message: 'Ошибка при обновлении пользователя',
       });
     });
