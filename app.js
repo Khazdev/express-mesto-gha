@@ -1,9 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
+const { errors } = require('celebrate');
 const userRoutes = require('./routes/user');
 const cardRoutes = require('./routes/card');
-const { NOT_FOUND_ERROR } = require('./constants/errors');
+const { login, createUser } = require('./controllers/user');
+const auth = require('./middlewares/auth');
+const errorsHandler = require('./middlewares/errorHandler');
+const { validateLogin, validateCreateUser } = require('./middlewares/validation');
+const NotFoundError = require('./errors/NotFoundError');
 
 const app = express();
 const port = 3000;
@@ -17,23 +22,19 @@ mongoose
     console.error('Error connecting to MongoDB:', error);
   });
 app.use(helmet());
-app.use((req, res, next) => {
-  req.user = {
-    _id: '658bc8d713460e7f79d5d77a', // вставьте сюда _id созданного в предыдущем пункте пользователя
-  };
-
-  next();
-});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.post('/signin', validateLogin, login);
+app.post('/signup', validateCreateUser, createUser);
+app.use(auth);
 app.use('/users', userRoutes);
 app.use('/cards', cardRoutes);
-app.use('*', (req, res) => {
-  res.status(NOT_FOUND_ERROR).send({
-    message: 'Здесь ничего нет :)',
-  });
+app.use('*', () => {
+  throw new NotFoundError('Здесь ничего нет :)');
 });
+app.use(errors());
+app.use(errorsHandler);
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
