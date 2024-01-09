@@ -5,21 +5,18 @@ const { URL_VALIDATION_REGEXP } = require('../constants/validation');
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Поле "name" должно быть заполнено.'],
     minlength: [2, 'Минимальная длина поля "name" - 2.'],
     maxlength: [30, 'Максимальная длина поля "name" - 30.'],
     default: 'Жак-Ив Кусто',
   },
   about: {
     type: String,
-    required: [true, 'Поле "about" должно быть заполнено.'],
     minlength: [2, 'Минимальная длина поля "about" - 2.'],
     maxlength: [30, 'Максимальная длина поля "about" - 30.'],
     default: 'Исследователь',
   },
   avatar: {
     type: String,
-    required: [true, 'Поле "avatar" должно быть заполнено.'],
     validate: {
       validator: (v) => URL_VALIDATION_REGEXP.test(v),
       message: 'Некорректный URL',
@@ -28,7 +25,7 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'Поле "email" должно быть заполнено.'],
     unique: true,
     validate: {
       validator: (v) => validator.isEmail(v),
@@ -37,7 +34,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: [true, 'Поле "password" должно быть заполнено.'],
     select: false,
   },
 }, { versionKey: false });

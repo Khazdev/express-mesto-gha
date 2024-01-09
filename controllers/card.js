@@ -28,17 +28,16 @@ module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findOne({ _id: cardId })
     .orFail(new NotFoundError('Карточка не найдена'))
-    .then((card) => {
+    .then(async (card) => {
       if (card.owner.toString() !== req.user._id.toString()) {
-        next(new ForbiddenError('У вас нет прав на удаление этой карточки'));
+        throw new ForbiddenError('У вас нет прав на удаление этой карточки');
       }
-      return Card.deleteOne({ _id: cardId });
+      await card.deleteOne();
     }).then(() => res.send({ message: 'Карточка удалена' }))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Пользователь не найден'));
-      }
-      next(err);
+      } else next(err);
     });
 };
 
@@ -55,8 +54,7 @@ module.exports.likeCard = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Пользователь не найден'));
-      }
-      next(err);
+      } else next(err);
     });
 };
 
@@ -73,7 +71,6 @@ module.exports.dislikeCard = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Пользователь не найден'));
-      }
-      next(err);
+      } else next(err);
     });
 };
