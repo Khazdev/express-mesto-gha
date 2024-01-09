@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const NotAuthorizedError = require('../errors/NotAuthorizedError');
+const config = require('../config');
 
 module.exports = (req, res, next) => {
   const cookies = req.headers.cookie;
@@ -13,7 +14,7 @@ module.exports = (req, res, next) => {
   }
   let payload;
   try {
-    payload = jwt.verify(token, 'abrakadabra');
+    payload = jwt.verify(token, config.jwtSecret);
   } catch (e) {
     return next(new NotAuthorizedError('Неверный токен авторизации'));
   }
